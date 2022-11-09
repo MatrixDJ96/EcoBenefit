@@ -96,13 +96,19 @@ class GeoDataHelper:
             for item in self.tree_data['features']:
                 name = item['properties']['Name']
                 canopy = item['properties']['Canopy Cover (m2)']
+                carbon = item['properties']['Carbon Storage (kg)']
+                height = item['properties']['Height (m)']
                 if name.lower() != 'total':
                     if not self.tree_categories.get(name):
                         self.tree_categories[name] = {}
                     increment_item_value(self.tree_categories[name], 'Abundance', 1)
                     increment_item_value(self.tree_categories[name], 'Canopy', float(canopy))
+                    increment_item_value(self.tree_categories[name], 'Carbon', float(carbon))
+                    increment_item_value(self.tree_categories[name], 'Height', float(height))
             for tree, data in self.tree_categories.items():
                 data['Canopy'] = data['Canopy'] / data['Abundance']
+                data['Carbon'] = data['Carbon'] / data['Abundance']
+                data['Height'] = data['Height'] / data['Abundance']
 
     def set_trees_neighborhoods(self, force: bool = False):
         if force or not self.tree_neighborhoods:
@@ -153,7 +159,7 @@ class GeoDataHelper:
         # Creo il l'oggetto CsvHelper
         csv_helper = CsvHelper()
         # Scrive i dati nel CSV
-        csv_helper.set_header(['Name', 'Abundance', 'Canopy'])
+        csv_helper.set_header(['Name', 'Abundance', 'Canopy', 'Carbon', 'Height'])
         for tree, data in self.tree_categories.items():
             csv_helper.add_row([tree] + list(data.values()))
         # Salvo il file csv
