@@ -64,6 +64,7 @@ class GeoDataHelper:
     # Dati elaborati dal JSON
     tree_categories: dict = {}
     tree_neighborhoods: dict = {}
+    tree_list: list = []
 
     top_trees: list = []
     other_tree_name: str = 'Others'
@@ -139,6 +140,23 @@ class GeoDataHelper:
                             increment_item_value(self.tree_neighborhoods[circoscrizione], name)
                             break
 
+    def set_tree_list(self, force: bool = False):
+        if force or not self.tree_list:
+            self.set_tree_data()
+            self.tree_list = []
+            for item in self.tree_data['features']:
+                name = item['properties']['Name']
+                canopy = item['properties']['Canopy Cover (m2)']
+                carbon = item['properties']['Carbon Storage (kg)']
+                height = item['properties']['Height (m)']
+                if name.lower() != 'total':
+                    self.tree_list.append({
+                        'Name': name,
+                        'Canopy': float(canopy),
+                        'Carbon': float(carbon),
+                        'Height': float(height)
+                    })
+
     def create_full_csv(self, path: str):
         self.set_tree_data()
         # Creo il l'oggetto CsvHelper
@@ -179,6 +197,17 @@ class GeoDataHelper:
         # Salvo il file csv
         csv_helper.save_file(path)
 
+    def create_tree_list_csv(self, path: str):
+        self.set_tree_list()
+        # Creo il l'oggetto CsvHelper
+        csv_helper = CsvHelper()
+        # Scrive i dati nel CSV
+        csv_helper.set_header(['Name', 'Canopy', 'Carbon', 'Height'])
+        for data in self.tree_list:
+            csv_helper.add_row(data.values())
+        # Salvo il file csv
+        csv_helper.save_file(path)
+
 
 if __name__ == '__main__':
     # Definisco i path del file
@@ -197,3 +226,6 @@ if __name__ == '__main__':
 
     # Creo CSV con la lista dei circoscrizioni e il numero di alberi
     geo_data_helper.create_tree_neighborhoods_csv(5, 'csv/' + tree_path.stem + '_neighborhoods')
+
+    # Creo CSV con la lista dei nomi e il numero di alberi
+    geo_data_helper.create_tree_list_csv('csv/' + tree_path.stem + '_list')
